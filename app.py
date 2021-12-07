@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, User
-from forms import UserForm
+from forms import UserForm, LoginForm
 
 
 app = Flask(__name__)
@@ -24,7 +24,8 @@ db.drop_all()
 db.create_all()
 @app.route('/')
 def home_page():
-    return render_template("base.html") 
+    # return render_template("base.html") 
+    return redirect('/register')
 
 @app.route('/register')
 def show_registration_form():
@@ -33,23 +34,38 @@ def show_registration_form():
 
 @app.route("/secret")
 def secret():
-    return "fun so far "
+    return "You made it"
 
 @app.route('/register', methods = ["POST"])
 def process_registration():
     form = UserForm()
-    unam = form.username.data   # username comes from forms.py
-    pword = form.password.data
-    emal = form.email.data
-    fname = form.first_name.data    # first_name comes from a Form class in forms.py
-    lname = form.last_name.data
-    
-    new_user = User(username = unam, password = pword, email = emal, first_name = fname, last_name = lname)
-    
-    db.session.add(new_user)
-    db.session.commit()
+    if form.validate_on_submit():
+        unam = form.username.data   # username comes from forms.py
+        pword = form.password.data
+        emal = form.email.data
+        fname = form.first_name.data    # first_name comes from a Form class in forms.py
+        lname = form.last_name.data
+        
+        # new_user = User.register(username = unam, password = pword, email = emal, first_name = fname, last_name = lname)
+        new_user = User.register(unam, pword, emal, fname, lname)
+        
+        db.session.add(new_user)
+        db.session.commit()
 
-    return redirect('/secret')
+        return redirect('/secret')
+
+# GET /login
+# Show a form that when submitted will login a user. This form should accept a username and a password.
+@app.route('/login', methods = ["GET", "POST"])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        existing_user = User.authenticate(username, password)
+        if existing_user:
+            return redirect('/secret')
+    return render_template('login.html', form = form)
 
 """
 Part 2: Make a Base Template
