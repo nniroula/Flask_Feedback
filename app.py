@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, session
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, User
 from forms import UserForm, LoginForm
@@ -39,6 +39,8 @@ def secret():
 @app.route('/register', methods = ["POST"])
 def process_registration():
     form = UserForm()
+    if 'username' in session:
+        return redirect(f"/users/{session['username']}")
     if form.validate_on_submit():
         unam = form.username.data   # username comes from forms.py
         pword = form.password.data
@@ -59,6 +61,9 @@ def process_registration():
 @app.route('/login', methods = ["GET", "POST"])
 def login():
     form = LoginForm()
+    if 'username' in session:
+        return redirect(f"/users/{session['username']}")
+
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
